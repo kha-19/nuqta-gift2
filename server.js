@@ -8,13 +8,14 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Serve static files from /public if present
+// Serve static files from /public if exists, otherwise from project root
 const publicDir = path.join(__dirname, 'public');
 if (fs.existsSync(publicDir)) {
   app.use(express.static(publicDir));
   console.log('Serving static files from /public');
 } else {
-  console.log('No /public folder found; static files will not be served.');
+  app.use(express.static(__dirname));
+  console.log('Serving static files from project root');
 }
 
 // Lazy/init Resend only if key present
@@ -63,10 +64,16 @@ app.post('/api/send-gift', async (req, res) => {
 
 // Root route: serve index.html if present, otherwise json status
 app.get('/', (req, res) => {
-  const indexPath = path.join(publicDir, 'index.html');
-  if (fs.existsSync(indexPath)) {
-    return res.sendFile(indexPath);
+  const indexInPublic = path.join(publicDir, 'index.html');
+  const indexInRoot = path.join(__dirname, 'index.html');
+
+  if (fs.existsSync(indexInPublic)) {
+    return res.sendFile(indexInPublic);
   }
+  if (fs.existsSync(indexInRoot)) {
+    return res.sendFile(indexInRoot);
+  }
+
   res.json({ status: 'Server is running ✅' });
 });
 
